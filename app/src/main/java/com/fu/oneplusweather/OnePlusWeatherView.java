@@ -7,12 +7,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 
@@ -35,24 +33,21 @@ public class OnePlusWeatherView extends View {
     private Map<Integer, Bitmap> icons = new HashMap<>(); //天气图标集合
     ArrayList<PointF> points = new ArrayList<>();   //点的集合
     private int interval;    //每一天所占的宽度，应为屏幕宽度的1/6
-
     private int screenWidth;
     private int screenHeight;
     private int maxPointHeight;     //所有最高温度点的最高高度
     private int minPointHeight;     //所有最低温度点的最低高度
-
     private int maxTemperature;     //元数据中所有温度的的最高和最低温度
     private int minTemperature;
-
     private float pointRadius; //折线拐点的半径,就是小圆点
-
     private int viewHeight;
     private int viewWidth;
+    private float pointUnitH;     //折线拐点的单位高度
     private float iconWidth;        //天气图标的边长
+
     private Paint linePaint;
     private Paint textPaint;
     private Paint circlePaint;
-    private float pointUnitH;     //折线拐点的单位高度
 
     public OnePlusWeatherView(Context context) {
         //这地方改为this,使得不管怎么初始化都会进入第三个构造函数中

@@ -96,6 +96,7 @@ public class OnePlusWeatherView extends View {
         //天气图标的边长，默认是间隔的一半
         iconWidth = interval / 2.0f;
 
+        //默认折线拐点圆的半径为3dp
         pointRadius = dp2pxF(context, 3f);
     }
 
@@ -130,7 +131,6 @@ public class OnePlusWeatherView extends View {
             Bitmap bmp = getWeatherIconForId(weatherIds[i], iconWidth, iconWidth);
             icons.put(weatherIds[i], bmp);
         }
-
     }
 
     /**
@@ -260,38 +260,86 @@ public class OnePlusWeatherView extends View {
     }
 
     /**
-     * 画出与点对应的温度
+     * 画竖线 5根
      *
      * @param canvas
      */
-    private void drawTemperatureText(Canvas canvas) {
+    private void drawVerticalLines(Canvas canvas) {
+        canvas.save();//保存画布当前状态(平移、放缩、旋转、错切、裁剪等),和canvas.restore()配合使用
+
+        linePaint.setColor(Color.WHITE);
+        linePaint.setAlpha(50);
+
+        float starX, starY, stopX, stopY;
+        starY = 0;
+        stopY = viewHeight;
+        for (int i = 0; i < 5; i++) {
+            starX = stopX = (i + 1) * interval;
+
+            canvas.drawLine(starX, starY, stopX, stopY, linePaint);
+        }
+        canvas.restore();
+    }
+
+    /**
+     * 画日期的文字
+     *
+     * @param canvas
+     */
+    private void drawDateAndWeekText(Canvas canvas) {
         canvas.save();
 
-        textPaint.setTextSize(sp2pxF(getContext(), 12f));
-
-        String text;
+        //画最上面那一行的日期
+        textPaint.setTextSize(sp2pxF(getContext(), 14f));
+        //拿到字体测量器
+        Paint.FontMetrics metrics = textPaint.getFontMetrics();
         float x;
-        float y;
-
-        //先画上面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的1~6
+        //ascent:上坡度，是文字的基线到文字的最高处的距离
+        //descent:下坡度,，文字的基线到文字的最低处的距离
+        float dateY = dp2pxF(getContext(), 10f) - (metrics.ascent + metrics.descent) / 2;
         for (int i = 0; i < 6; i++) {
-            //上面的是最高温度
-            text = data.get(i).getMaxTemperature() + "°";
-            x = points.get(i + 1).x;
-            y = points.get(i + 1).y - dp2pxF(getContext(), 12f); //要比拐点高一点,注意是减
-            Paint.FontMetrics metrics = textPaint.getFontMetrics();
-            canvas.drawText(text, x, y - (metrics.ascent + metrics.descent) / 2, textPaint);
+            String dateText = data.get(i).getDate();
+            x = i * interval + interval / 2;
+            canvas.drawText(dateText, x, dateY, textPaint);
         }
 
-        //再画下面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的14~9
+        //画第二行的星期
+        textPaint.setTextSize(sp2pxF(getContext(), 12f));
+        //ascent:上坡度，是文字的基线到文字的最高处的距离
+        //descent:下坡度,，文字的基线到文字的最低处的距离
+        float weekY = dp2pxF(getContext(), 30f) - (metrics.ascent + metrics.descent) / 2;
         for (int i = 0; i < 6; i++) {
-            //下面的是最低温度,注意这里是5-i
-            text = data.get(5 - i).getMinTemperature() + "°";
-            x = points.get(i + 9).x;
-            y = points.get(i + 9).y + dp2pxF(getContext(), 12f);  //要比拐点低一点，注意是加
-            Paint.FontMetrics metrics = textPaint.getFontMetrics();
-            canvas.drawText(text, x, y - (metrics.ascent + metrics.descent) / 2, textPaint);
+            String weekText = data.get(i).getWeek();
+            x = i * interval + interval / 2;
+            canvas.drawText(weekText, x, weekY, textPaint);
         }
+
+        canvas.restore();
+    }
+
+    /**
+     * 画天气图标
+     *
+     * @param canvas
+     */
+    private void drawWeatherIcon(Canvas canvas) {
+        canvas.save();
+        float iconX, iconY;   //图标的坐标
+        //Y坐标都是一样的，默认为控件高度的3/8再往上一点
+        iconY = (viewHeight * 3) / 8 - dp2pxF(getContext(), 10f);
+        for (int i = 0; i < 6; i++) {
+            //拿到每一天的天气对应的图标
+            Bitmap icon = icons.get(data.get(i).getWeatherId());
+            iconX = i * interval + interval / 2;
+
+            //创建一个用来绘制图标的矩形区域
+            RectF iconRect = new RectF(iconX - iconWidth / 2.0f,
+                    iconY - iconWidth / 2.0f,
+                    iconX + iconWidth / 2.0f,
+                    iconY + iconWidth / 2.0f);
+            canvas.drawBitmap(icon, null, iconRect, null);
+        }
+
 
         canvas.restore();
     }
@@ -385,88 +433,41 @@ public class OnePlusWeatherView extends View {
         }
     }
 
+
     /**
-     * 画天气图标
+     * 画出与点对应的温度
      *
      * @param canvas
      */
-    private void drawWeatherIcon(Canvas canvas) {
-        canvas.save();
-        float iconX, iconY;   //图标的坐标
-        //Y坐标都是一样的，默认为控件高度的3/8再往上一点
-        iconY = (viewHeight * 3) / 8 - dp2pxF(getContext(), 10f);
-        for (int i = 0; i < 6; i++) {
-            //拿到每一天的天气对应的图标
-            Bitmap icon = icons.get(data.get(i).getWeatherId());
-            iconX = i * interval + interval / 2;
-
-            //创建一个用来绘制图标的矩形区域
-            RectF iconRect = new RectF(iconX - iconWidth / 2.0f,
-                    iconY - iconWidth / 2.0f,
-                    iconX + iconWidth / 2.0f,
-                    iconY + iconWidth / 2.0f);
-            canvas.drawBitmap(icon, null, iconRect, null);
-        }
-
-
-        canvas.restore();
-    }
-
-    /**
-     * 画日期的文字
-     *
-     * @param canvas
-     */
-    private void drawDateAndWeekText(Canvas canvas) {
+    private void drawTemperatureText(Canvas canvas) {
         canvas.save();
 
-        //画最上面那一行的日期
-        textPaint.setTextSize(sp2pxF(getContext(), 14f));
-        //拿到字体测量器
-        Paint.FontMetrics metrics = textPaint.getFontMetrics();
-        float x;
-        //ascent:上坡度，是文字的基线到文字的最高处的距离
-        //descent:下坡度,，文字的基线到文字的最低处的距离
-        float dateY = dp2pxF(getContext(), 10f) - (metrics.ascent + metrics.descent) / 2;
-        for (int i = 0; i < 6; i++) {
-            String dateText = data.get(i).getDate();
-            x = i * interval + interval / 2;
-            canvas.drawText(dateText, x, dateY, textPaint);
-        }
-
-        //画第二行的星期
         textPaint.setTextSize(sp2pxF(getContext(), 12f));
-        //ascent:上坡度，是文字的基线到文字的最高处的距离
-        //descent:下坡度,，文字的基线到文字的最低处的距离
-        float weekY = dp2pxF(getContext(), 30f) - (metrics.ascent + metrics.descent) / 2;
+
+        String text;
+        float x;
+        float y;
+
+        //先画上面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的1~6
         for (int i = 0; i < 6; i++) {
-            String weekText = data.get(i).getWeek();
-            x = i * interval + interval / 2;
-            canvas.drawText(weekText, x, weekY, textPaint);
+            //上面的是最高温度
+            text = data.get(i).getMaxTemperature() + "°";
+            x = points.get(i + 1).x;
+            y = points.get(i + 1).y - dp2pxF(getContext(), 12f); //要比拐点高一点,注意是减
+            Paint.FontMetrics metrics = textPaint.getFontMetrics();
+            canvas.drawText(text, x, y - (metrics.ascent + metrics.descent) / 2, textPaint);
         }
 
-        canvas.restore();
-    }
-
-    /**
-     * 画竖线 5根
-     *
-     * @param canvas
-     */
-    private void drawVerticalLines(Canvas canvas) {
-        canvas.save();//保存画布当前状态(平移、放缩、旋转、错切、裁剪等),和canvas.restore()配合使用
-
-        linePaint.setColor(Color.WHITE);
-        linePaint.setAlpha(50);
-
-        float starX, starY, stopX, stopY;
-        starY = 0;
-        stopY = viewHeight;
-        for (int i = 0; i < 5; i++) {
-            starX = stopX = (i + 1) * interval;
-
-            canvas.drawLine(starX, starY, stopX, stopY, linePaint);
+        //再画下面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的14~9
+        for (int i = 0; i < 6; i++) {
+            //下面的是最低温度,注意这里是5-i
+            text = data.get(5 - i).getMinTemperature() + "°";
+            x = points.get(i + 9).x;
+            y = points.get(i + 9).y + dp2pxF(getContext(), 12f);  //要比拐点低一点，注意是加
+            Paint.FontMetrics metrics = textPaint.getFontMetrics();
+            canvas.drawText(text, x, y - (metrics.ascent + metrics.descent) / 2, textPaint);
         }
+
         canvas.restore();
     }
 

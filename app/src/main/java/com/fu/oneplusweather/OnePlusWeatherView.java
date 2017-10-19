@@ -45,9 +45,9 @@ public class OnePlusWeatherView extends View {
     private float pointUnitH;     //折线拐点的单位高度
     private float iconWidth;        //天气图标的边长
 
-    private Paint linePaint;
-    private Paint textPaint;
-    private Paint circlePaint;
+    private Paint linePaint;       //画线的笔
+    private Paint textPaint;       //画文字的笔
+    private Paint circlePaint;     //画拐点的笔
 
     public OnePlusWeatherView(Context context) {
         //这地方改为this,使得不管怎么初始化都会进入第三个构造函数中
@@ -283,10 +283,10 @@ public class OnePlusWeatherView extends View {
             canvas.drawText(text, x, y - (metrics.ascent + metrics.descent) / 2, textPaint);
         }
 
-        //再画下面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的9~14
+        //再画下面6个点的温度,数据对应的是0~5,坐标对应的是points集合中的14~9
         for (int i = 0; i < 6; i++) {
-            //下面的是最低温度
-            text = data.get(i).getMinTemperature() + "°";
+            //下面的是最低温度,注意这里是5-i
+            text = data.get(5 - i).getMinTemperature() + "°";
             x = points.get(i + 9).x;
             y = points.get(i + 9).y + dp2pxF(getContext(), 12f);  //要比拐点低一点，注意是加
             Paint.FontMetrics metrics = textPaint.getFontMetrics();

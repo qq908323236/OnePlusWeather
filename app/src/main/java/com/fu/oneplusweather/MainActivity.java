@@ -14,10 +14,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         this.weatherview = (OnePlusWeatherView) findViewById(R.id.weather_view);
 
         List<WeatherBean> data = new ArrayList<>();
-
         WeatherBean w1 = new WeatherBean(1, "10/19", "今日", 20, 15);
         WeatherBean w2 = new WeatherBean(2, "10/20", "周五", 23, 16);
         WeatherBean w3 = new WeatherBean(3, "10/21", "周六", 21, 16);
